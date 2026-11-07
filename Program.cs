@@ -1,6 +1,7 @@
 ﻿
 using HelloWorld.Models;
 using HelloWorld.Data;
+using Microsoft.Extensions.Configuration;
 
 namespace HelloWorld
 {
@@ -85,12 +86,16 @@ namespace HelloWorld
                 VideoCard = "RTX 5070",
             };
 
+            IConfiguration config = new ConfigurationBuilder()
+            .AddJsonFile("appsettings.json")
+            .Build();
+
             // When choosing a data access layer for C# applications, 
             // the choice typically comes down to Dapper (a lightweight Micro-ORM)
             //  and Entity Framework Core (a full-featured Object-Relational Mapper)
 
             // OPTION 1: Using Dapper
-            DataContextDapper dapper = new DataContextDapper();
+            DataContextDapper dapper = new DataContextDapper(config);
             string sqlCommand = "SELECT GETDATE()";
             DateTime rightNow = dapper.LoadSingleData<DateTime>(sqlCommand);
             Console.WriteLine(rightNow);
@@ -143,7 +148,7 @@ namespace HelloWorld
             }
 
             // OPTION 2: Using Entity Framework Core
-            DataContextEF entityFramework = new DataContextEF();
+            DataContextEF entityFramework = new DataContextEF(config);
 
             entityFramework.Add(myComputer);
             entityFramework.SaveChanges();

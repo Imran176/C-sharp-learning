@@ -1,6 +1,7 @@
 
 using HelloWorld.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace HelloWorld.Data;
 
@@ -9,14 +10,37 @@ namespace HelloWorld.Data;
 // Abstraction: DbContext, Hiding implementation details and exposing essential functionality
 public class DataContextEF : DbContext
 {
-    // DbSet represents a collection of Computer entities
-    // that EF Core maps to a database table.
-    public DbSet<Computer>? Computer { get; set; }
+    // private IConfiguration _config;
 
     // Connection string contains the information required
     // to connect to the SQL Server database.
+    // readonly: The connection string can only be assigned
+    // during declaration or inside the constructor.
+    // It cannot be reassigned after the object is initialized.
     // Encapsulation: Controlling access to data and implementation
-    private string _connectionString = "Server=localhost;Database=DotNetCourseDatabase;TrustServerCertificate=true;Trusted_Connection=true";
+    private readonly string _connectionString;
+    // private string _connectionString = "Server=localhost;Database=DotNetCourseDatabase;TrustServerCertificate=true;Trusted_Connection=true";
+    // private string connectionString = "Server=localhost;Database=DotNetCourseDatabase;TrustServerCertificate=true;Trusted_Connection=false;User Id=sa;Password=SQLConnect1;";
+
+    // Constructor: Runs automatically when a new DataContextDapper
+    // object is created. IConfiguration is injected through
+    // Dependency Injection (DI).
+    public DataContextEF(IConfiguration config)
+    {
+        // GetConnectionString() retrieves the connection string
+        // named "DefaultConnection" from the application configuration.
+        //
+        // Null-coalescing operator (??):
+        // If the connection string is null, throw an exception.
+        // Otherwise, assign the retrieved connection string to the field.
+        // _config = config;
+        _connectionString = config.GetConnectionString("DefaultConnection")
+        ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+    }
+
+    // DbSet represents a collection of Computer entities
+    // that EF Core maps to a database table.
+    public DbSet<Computer>? Computer { get; set; }
 
     // Polymorphism: Method overriding allows DataContextEF
     // to provide its own implementation of OnConfiguring().
