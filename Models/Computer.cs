@@ -9,6 +9,18 @@ public class Computer
     // Primary key of the Computer entity.
     // SQL Server can automatically generate this value if the corresponding
     // database column is configured as an IDENTITY column.
+    //
+    // To map JSON properties with different names to C# properties,
+    // we can use the [JsonPropertyName] attribute from System.Text.Json.
+    //
+    // Place [JsonPropertyName("property_name_in_json")] directly above
+    // the C# property that should be mapped to the specified JSON property.
+    //
+    // Example:
+    // JSON property: "computer_id"
+    // C# property: ComputerId
+    //
+    // [JsonPropertyName("computer_id")]
     public int ComputerId { get; set; }
 
     // Stores the computer's motherboard name or manufacturer.

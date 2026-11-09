@@ -6,6 +6,8 @@ using SystemSerializer = System.Text.Json.JsonSerializer; // Using namespace ali
 using System.Text.Json;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using AutoMapper;
+using Microsoft.Extensions.Logging;
 
 namespace HelloWorld
 {
@@ -232,7 +234,6 @@ namespace HelloWorld
             File.WriteAllText("computerCopySystem.txt", computerCopySystem);
 
 
-
             // Working with JSON - Option 2 : Newtonsoft.Json
 
             // Configure Newtonsoft.Json serialization settings.
@@ -305,11 +306,55 @@ namespace HelloWorld
                     // than being converted into culture-dependent strings.
                     //
                     // Nullable properties are also handled automatically.
-                    dapper.ExecuteSqlWithParameters(insertNewComputerSql, singleComputer);
+                    // dapper.ExecuteSqlWithParameters(insertNewComputerSql, singleComputer);
 
-                    Console.WriteLine($"Added computer {singleComputer.ComputerId} to database successfully!");
+                    // Console.WriteLine($"Added computer {singleComputer.ComputerId} to database successfully!");
                 }
             }
+
+            // Working with JSON - Option 3 : AutoMapper
+            string computersSnakeJson = File.ReadAllText("ComputersSnake.json");
+
+            // Create an ILoggerFactory instance.
+            // AutoMapper uses this for internal logging and licensing operations.
+            ILoggerFactory loggerFactory = LoggerFactory.Create(builder => { });
+
+            // Configure AutoMapper to map ComputerSnake objects into Computer objects.
+            MapperConfiguration mapperConfig = new MapperConfiguration(cfg =>
+            {
+                cfg.CreateMap<ComputerSnake, Computer>()
+
+                    // Explicitly map computer_id from the source object
+                    // to ComputerId in the destination object.
+                    .ForMember(destination => destination.ComputerId, options =>
+                        options.MapFrom(source => source.computer_id));
+
+            }, loggerFactory);
+
+            // Create an IMapper instance using the configured mapping rules.
+            IMapper mapper = mapperConfig.CreateMapper();
+
+            // Deserialize the JSON string into a collection of ComputerSnake objects.
+            IEnumerable<ComputerSnake>? systemDeserializedComputersSnake =
+                SystemSerializer.Deserialize<IEnumerable<ComputerSnake>>(computersSnakeJson);
+
+            // Check whether deserialization returned a collection.
+            if (systemDeserializedComputersSnake != null)
+            {
+                // Convert the collection of ComputerSnake objects into Computer objects.
+                // AutoMapper automatically maps properties with matching names
+                // and uses our custom mapping rule for ComputerId.
+                IEnumerable<Computer> computerResults =
+                    mapper.Map<IEnumerable<Computer>>(systemDeserializedComputersSnake);
+
+                // Iterate through the mapped Computer objects.
+                foreach (Computer computer in computerResults)
+                {
+                    Console.WriteLine(
+                        $"computer# {computer.ComputerId}: {computer.Motherboard}");
+                }
+            }
+
         }
 
         static string EscapeSingleQuote(string input)
