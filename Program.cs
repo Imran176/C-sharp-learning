@@ -13,7 +13,12 @@ namespace HelloWorld
 {
     class Program
     {
-        static void Main(string[] args)
+        // Main is the entry point of the application.
+        //
+        // The async keyword allows us to use await inside this method.
+        // Task represents an asynchronous operation that may complete
+        // in the future.
+        static async Task Main(string[] args)
         {
 
             // Console.WriteLine("Hello, World!");
@@ -124,8 +129,8 @@ namespace HelloWorld
             // dapper.ExecuteSql(sql);
 
             string sqlSelect = @"SELECT 
-                 Computer.ComputerId,
-                 Computer.Motherboard,
+                Computer.ComputerId,
+                Computer.Motherboard,
                 Computer.HasWifi,
                 Computer.HasLTE,
                 Computer.ReleaseDate,
@@ -192,7 +197,7 @@ namespace HelloWorld
             // Read File - Option 1 :
             Console.WriteLine("=============== Read File - Option 1 ===============");
             string fileText = File.ReadAllText("log.txt");
-            Console.WriteLine(fileText);
+            // Console.WriteLine(fileText);
 
             // Working with JSON files
             Console.WriteLine("=============== Reading Computers JSON File ===============");
@@ -355,11 +360,128 @@ namespace HelloWorld
                 }
             }
 
+
+            // Working with asynchronous logic.
+            //
+            // Asynchronous programming allows operations to execute
+            // without blocking the current thread while waiting for
+            // operations such as delays, network requests, or file I/O.
+
+
+            // OPTION 1: Creating and running Tasks manually.
+
+            // Create a new Task.
+            // The code inside the lambda expression will execute
+            // when this Task is started.
+            Task firstTask = new Task(() =>
+            {
+                // Thread.Sleep blocks the thread for 100 milliseconds.
+                // Unlike Task.Delay, this is a synchronous blocking operation.
+                Thread.Sleep(100);
+
+                // This message is printed after the delay completes.
+                Console.WriteLine("Task 1");
+            });
+
+            // Start executing the Task.
+            // The Task is scheduled to run on a thread managed by
+            // the .NET Task Scheduler (normally using the ThreadPool).
+            firstTask.Start();
+
+
+            // OPTION 2: Calling an asynchronous method.
+
+            // Call ConsoleAfterDelayAsync.
+            // It starts executing immediately and returns a Task.
+            //
+            // Task.Delay waits asynchronously without blocking a thread.
+            // We store the returned Task so we can await its completion later.
+            Task secondTask = ConsoleAfterDelayAsync("Task 2", 150);
+
+
+            // OPTION 3: Calling a synchronous method.
+
+            // This method blocks the current thread for 75 milliseconds.
+            // The next statement cannot execute until this method finishes.
+            ConsoleAfterDelay("Sync Delay", 75);
+
+
+            // Start another asynchronous operation.
+            //
+            // This operation can progress while we await other Tasks.
+            // We don't need to await it immediately.
+            Task thirdTask = ConsoleAfterDelayAsync("Task 3", 50);
+
+
+            // Wait asynchronously for secondTask to finish.
+            // The current method pauses here, but the thread is not blocked.
+            await secondTask;
+
+
+            // Wait asynchronously for firstTask to finish.
+            // Even though firstTask was started earlier, we explicitly
+            // wait for it here before continuing.
+            await firstTask;
+
+
+            // This message is printed only after both secondTask
+            // and firstTask have completed.
+            Console.WriteLine("After Task 1 was created");
+
+
+            // Wait for the third asynchronous operation to complete.
+            // This ensures that Task 3 finishes before Main exits.
+            await thirdTask;
+
         }
 
+        // Synchronous method:
+        // Executes the code sequentially and blocks the calling thread
+        // while waiting for the specified delay.
+        static void ConsoleAfterDelay(string text, int delayTime)
+        {
+            // Thread.Sleep pauses the current thread.
+            // The thread cannot perform other work during this time.
+            Thread.Sleep(delayTime);
+
+            // Print the supplied text after the delay.
+            Console.WriteLine(text);
+        }
+
+
+        // Asynchronous method:
+        // The async keyword allows this method to use await.
+        //
+        // Task indicates that this method performs an asynchronous
+        // operation and does not return a result.
+        static async Task ConsoleAfterDelayAsync(string text, int delayTime)
+        {
+            // Task.Delay creates a Task that completes after the
+            // specified number of milliseconds.
+            //
+            // Unlike Thread.Sleep, Task.Delay does not block the
+            // current thread while waiting.
+            //
+            // await pauses this method until the delay completes,
+            // allowing the thread to perform other work.
+            await Task.Delay(delayTime);
+
+            // This statement executes after the delay has completed.
+            Console.WriteLine(text);
+        }
+
+
+        // Utility method:
+        // Escapes single quotes in a string so they can be represented
+        // safely inside a SQL string literal.
         static string EscapeSingleQuote(string input)
         {
+            // Replace every single quote (') with two single quotes ('').
+            // SQL Server interprets two consecutive single quotes
+            // inside a string literal as one actual single quote.
             string output = input.Replace("'", "''");
+
+            // Return the modified string.
             return output;
         }
     }
